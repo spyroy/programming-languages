@@ -1,0 +1,286 @@
+#lang pl
+
+#|
+1.1 function to create a string from given 5 characters.
+it simply recives 5 Chars and returns string with that chars.
+|#
+(: append5 : Char Char Char Char Char -> String)
+(define (append5 c1 c2 c3 c4 c5)
+  (string c1 c2 c3 c4 c5))
+
+#|
+tests for the function append5
+|#
+(test (append5 #\e #\d #\c #\b #\a) => "edcba")
+(test (append5 #\a #\a #\a #\a #\a) => "aaaaa")
+;*******************************************;
+;; this calls should not work:
+;;(append5 #\e #\d #\c #\b #\a #\a))
+;;(append5 1 2 3 4 5))
+;(append5 "edcba"))
+
+#|
+1.2 function to create all permutation of given 3 characters.
+it returns a list of 6 elements (could be the same value multiple times)
+which are all permutations of the given 3 Chars (3! = 6).
+this function simply takes all options to order - 3 characters and making string out of them
+and puting it in list of strings.
+|#
+(: permute3 : Char Char Char -> (List String String String String String String))
+(define (permute3 c1 c2 c3)
+  (list (string c1 c2 c3) (string c1 c3 c2) (string c2 c1 c3) (string c2 c3 c1) (string c3 c1 c2) (string c3 c2 c1)))
+
+#|
+tests for the function permute3
+|#
+(test (permute3 #\a #\b #\c) => '("abc" "acb" "bac" "bca" "cab" "cba"))
+(test (permute3 #\a #\a #\a) => '("aaa" "aaa" "aaa" "aaa" "aaa" "aaa"))
+;*******************************************;
+;; this calls should not work:
+;;(test (permute3 #\a #\b #\c #\d)
+;;(test (permute3 1 2 3)
+;(test (permute3 "abc")
+
+#|
+2.1 recursive function to count the number of lists with length - 3 in a list.
+since every list is con [][] such that in the first cell is the first element and in the second sell all other elements,
+we can simply check if the first cell is list with exacly 3 elements and send the rest to the function recursivly.
+note that list of list of list (or deeper) with 3 elements is not counted.
+|#
+(: count-3lists : (Listof (Listof Any)) -> Natural)
+(define (count-3lists lst)
+  (cond
+    [(null? lst) 0]
+    [(= (length (first lst)) 3) (add1 (count-3lists (rest lst)))]
+    [else (count-3lists (rest lst))]))
+
+;; side function to compute the length of list.
+; taken from ['lecture 01a 2021.pdf']
+(: length : (Listof Any) -> Natural)
+(define (length l)
+  (cond
+    [(null? l) 0]
+    [else (add1 (length (rest l)))]))
+
+#|
+tests for the function count-3lists
+|#
+(test (count-3lists '((1 3 4) (() (1 2 3)) ("tt" "Three" 7) (2 4 6 8) (1 2 3))) => 3)
+(test (count-3lists '()) => 0)
+(test (count-3lists '(((1 2 3)(1 2 3) (1 2 3)))) => 1)
+;*******************************************;
+;; this calls should not work:
+;;(test (count-3lists '(1 2 3))  /this is not list of list
+;;(test (count-3lists 1 2 3)
+
+#|
+2.2 same as 2.1 just with tail-recursion.
+the 'helper' function computes the current value therefore there are no side calculations which waiting for answers,
+hence that is a tail recursion.
+|#
+(: helper : Natural (Listof (Listof Any)) -> Natural)
+  (define (helper count lst)
+    (cond
+      [(null? lst) count]
+      [(= (length (first lst)) 3) (helper (add1 count) (rest lst))]
+      [else (helper count (rest lst))]))
+
+(: count-3lists-tail : (Listof (Listof Any)) -> Natural)
+(define (count-3lists-tail lst)
+  (helper 0 lst))
+
+#|
+tests for the function count-3lists-tail (same tests).
+|#
+(test (count-3lists-tail '((1 3 4) (() (1 2 3)) ("tt" "Three" 7) (2 4 6 8) (1 2 3))) => 3)
+(test (count-3lists-tail '()) => 0)
+(test (count-3lists-tail '(((1 2 3)(1 2 3) (1 2 3)))) => 1)
+;*******************************************;
+;; this calls should not work:
+;;(test (count-3lists '(1 2 3))  /this is not list of list
+;;(test (count-3lists 1 2 3)
+
+#|
+2.3 same as 2.1 but now the function counts also the nested lists.
+i used the andmap function which returns true only if all elements in the list are lists (in our case),
+['https://docs.racket-lang.org/reference/pairs.html'] (in the andmap section)
+i searched on google and found out that i can use andmap and than searched it on the racket reference.
+note that the function works only in cases where the list of list is also a list of list,
+for example - '((1 (2 3 5) 4)) will return 1 instead of 3.
+|#
+(: count-3listsRec : (Listof (Listof Any)) -> Natural)
+(define (count-3listsRec lst)
+  (cond
+    [(null? lst) 0]
+    [(and (= (length (first lst)) 3) (andmap list? (first lst))) (add1 (+ (count-3listsRec (first lst)) (count-3listsRec (rest lst))))]
+    [(= (length (first lst)) 3) (add1 (count-3listsRec (rest lst)))]
+    [(andmap list? (first lst)) (+ (count-3listsRec (first lst)) (count-3listsRec (rest lst)))]
+    [else (count-3listsRec (rest lst))]))
+ 
+#|
+tests for the function count-3listsRec
+|#
+(test (count-3listsRec '((1 3 4) (() (1 2 3) (1 2 3)) (() (1 2 3)) ("tt" "Three" 7) (2 4 6 8) (1 2 3))) => 7)
+(test (count-3listsRec '((1 3 4) (1 (1 2 3) (1 2 3)) (() (1 2 3)) ("tt" "Three" 7) (2 4 6 8) (1 2 3))) => 5)
+(test (count-3listsRec '((((1 2 3))))) => 1)
+
+#|
+3.1 + 3.2 define-type of Keytack and constructor EmptyKS and push.
+(Push 'a "AAA" (Push 'b "B" (Push 'a "A" (EmptyKS)))) = EmptyKS_'a -> ["A"] -> ["AAA" "A"]
+                                                        EmptyKS_'b
+['https://pl.barzilay.org/lec03#_the_define-type_form_']
+|#
+(define-type KeyStack
+  [EmptyKS]
+  [Push Symbol String KeyStack])
+
+#|
+a very simple tests for KeyStack EmptyKS and push
+|#
+(test (EmptyKS) => (EmptyKS))
+(test (Push 'b "B" (Push 'a "A" (EmptyKS))) => (Push 'b "B" (Push 'a "A" (EmptyKS))))
+(test (Push 'b "B" (EmptyKS)) => (Push 'b "B" (EmptyKS)))
+;*******************************************;
+;; this calls should not work:
+;(test (Push 'a "A"))
+
+#|
+3.3 search-stack function to find last element on the stack (LIFO).
+I used cases to check the type of the given element,
+then asigned S - to the symbol, STR - to the string and ks - to the KeyStack.
+After that I checked if the given symbol maches the symbol in the stack,
+if it doesnt so we recursivly send the same symbol and the inner stack.
+if it found nothing than it returns #f (aka false)
+['https://pl.barzilay.org/lec03#_the_cases_form_']
+['https://docs.racket-lang.org/rosette-guide/sec_equality.html']
+|#
+(: search-stack : Symbol KeyStack -> (U String Boolean))
+(define (search-stack sym ks)
+  (cases ks
+    [(Push S STR K)
+     (cond
+       [(equal? sym S) STR]
+       [else (search-stack sym K)])]
+    [else #f]))
+
+#|
+tests for search-stack
+|#
+(test (search-stack 'a (Push 'a "AAA" (Push 'b "B" (Push 'a "A" (EmptyKS))))) => "AAA")
+(test (search-stack 'c (Push 'a "AAA" (Push 'b "B" (Push 'a "A" (EmptyKS))))) => #f)
+(test (search-stack 'a (EmptyKS)) => #f)
+(test (search-stack 'a (Push 'a "A" (Push 'a "B" (Push 'a "C" (EmptyKS))))) => "A")
+
+#|
+3.4 pop-stack function remove the first element from the stack, the symbol does not matter,
+so the function simply check the first element in the stack
+(if its from the form "(Push S STR K)" so it is not empty),
+and returns the rest, otherwise the function will return #f (aka false).
+|#
+(: pop-stack : KeyStack -> (U KeyStack Boolean))
+(define (pop-stack ks)
+  (cases ks
+    [(Push S STR K) K]
+    [else #f]))
+
+#|
+tests for pop-stack
+|#
+(test (pop-stack (Push 'a "AAA" (Push 'b "B" (Push 'a "A" (EmptyKS))))) => (Push 'b "B" (Push 'a "A" (EmptyKS))))
+(test (pop-stack (Push 'b "AAA" (Push 'a "B" (Push 'a "A" (EmptyKS))))) => (Push 'a "B" (Push 'a "A" (EmptyKS))))
+(test (pop-stack (EmptyKS)) => #f)
+
+#|
+4 write comments on the following.
+|#
+(: is-odd? : Natural -> Boolean)
+;; the function is-odd recives a Natural number and returns #t/#f (Boolean True or Fslse)
+;; the function checks if the given number is zero, if it is indeed zero it returns false.
+; if it is not zero it calls the function is-even with the given number minus 1.
+(define (is-odd? x)
+ (if (zero? x)
+ false
+ (is-even? (- x 1))))
+(: is-even? : Natural -> Boolean)
+;; the function is-even recives a Natural number and returns #t/#f (Boolean True or Fslse)
+;; the function checks if the given number is zero, if it is indeed zero it returns true.
+; if it is not zero it calls the function is-odd with the given number minus 1.
+(define (is-even? x)
+ (if (zero? x)
+ true
+ (is-odd? (- x 1))))
+#|
+the functions is-odd and is-even are solving the same problem - if a number is even or odd.
+this works because if a number is odd and we call is-odd than the number of calls to the functions will also be odd (excluding first call),
+hence it will end in is-even and output true,
+if the number is odd and we call is even than the number of calls to the function will also be odd (excluding first call),
+hence it will end in is-odd and output false.
+the case with even number works the same, therfore the functions will always output the correct answer.
+|#
+;; tests --- is-odd?/is-even?
+(test (not (is-odd? 12)))
+(test (is-even? 12))
+(test (not (is-odd? 0)))
+(test (is-even? 0))
+(test (is-odd? 1))
+(test (not (is-even? 1)))
+
+
+(: every? : (All (A) (A -> Boolean) (Listof A) -> Boolean))
+;; See explanation about the All syntax at the end of the file...
+;; the function recives a boolean function and a list where all elements in the list with the same type and returns Boolean.
+;; the function returns true if and only if all elements in the list returned true on the given function.
+;; this function is recursively checking all elemnts in the list if the list is empty it will return true (break condition)
+; otherwise all other elements have to return true from the given function.
+(define (every? pred lst)
+ (or (null? lst)
+ (and (pred (first lst))
+ (every? pred (rest lst)))))
+
+;; An example for the usefulness of this polymorphic function
+(: all-even? : (Listof Natural) -> Boolean)
+;; this function recives list of natural numbers and returns Boolean.
+; if all numbers in the list are even than the function will return true, otherwise false.
+(define (all-even? lst)
+ (every? is-even? lst))
+;; tests
+(test (all-even? null))
+(test (all-even? (list 0)))(test (all-even? (list 2 4 6 8)))
+(test (not (all-even? (list 1 3 5 7))))
+(test (not (all-even? (list 1))))
+(test (not (all-even? (list 2 4 1 6))))
+
+
+(: every2? : (All (A B) (A -> Boolean) (B -> Boolean) (Listof A) (Listof B) -> Boolean))
+;; this function recives two boolean functions two lists
+;;(elements in the first list has to be from the same type and all elements in the second list has to be from the same type) and returns boolean.
+;; if all elements in the first list returned true from the first function AND all elements in the second list returned true from the second function
+;; the function will output true, otherwise false.
+; it works like the previos function but now in the 'AND' condition we also want that the second list will return true for all of its elements from the second function.
+(define (every2? pred1 pred2 lst1 lst2)
+ (or (null? lst1) ;; both lists assumed to be of same length
+ (and (pred1 (first lst1))
+ (pred2 (first lst2))
+ (every2? pred1 pred2 (rest lst1) (rest lst2)))))
+
+(: all-odd? : (Listof Natural) -> Boolean)
+;; this function recives list of natural numbers and returns Boolean.
+; if all numbers in the list are odd than the function will return true, otherwise false.
+(define (all-odd? lst)
+ (every? is-odd? lst))
+(: even-odd? : (Listof Natural) (Listof Natural) -> Boolean)
+(define (even-odd? lst1 lst2)
+  (every2? is-even? is-odd? lst1 lst2))
+;; tests
+(test (all-odd? null))
+(test (all-odd? (list 1 3 5 7)))
+(test (even-odd? (list 2 4 6) (list 1 3 5)))
+
+
+
+#|
+*********************some remarks on the work*********************
+my struggle with this work was the syntax of the new language, so i used the pl:resources
+and the docs for the language as much as i can.
+it took about 7 hours and i think it helped me to understand the language.
+|#
